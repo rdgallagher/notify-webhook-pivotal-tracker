@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import sys
 import urllib, urllib2
 import re
 import os
 import subprocess
+from dict2xml2 import dict2xml2
 from datetime import datetime
-import simplejson as json
+
 
 def git(args):
     args = ['git'] + args
@@ -33,6 +35,7 @@ def get_repo_name():
 
 POST_URL = get_config('hooks.webhookurl')
 REPO_URL = get_config('meta.url')
+authtok = get_config('meta.apikey')
 COMMIT_URL = get_config('meta.commiturl')
 if COMMIT_URL == None and REPO_URL != None:
     COMMIT_URL = REPO_URL + r'/commit/%s'
@@ -91,7 +94,7 @@ def get_revisions(old, new):
 
     return revisions
 
-def make_json(old, new, ref):
+def make_json(old, new, ref, POST_URL, authtok):
     data = {
         'before': old,
         'after': new,
@@ -108,34 +111,61 @@ def make_json(old, new, ref):
         }
 
     revisions = get_revisions(old, new)
-    commits = []
+    
     for r in revisions:
         url = None
         if COMMIT_URL != None:
             url = COMMIT_URL % r['id']
-        commits.append({'id': r['id'],
-                        'author': {'name': r['name'], 'email': r['email']},
-                        'url': url,
-                        'message': r['message'],
-                        'timestamp': r['date']
-                        })
-    data['commits'] = commits
+      
+	commits = {
+	     'source_commit': {
+	     'message': r['message'],
+	     'author': r['name'],
+	     'commit_id': r['id'],
+	     'url' : url
+		}
+	     }
+	    
+	if POST_URL:
+	  print(commits)
+	  post(POST_URL, dict2xml2(commits, False, False),authtok)
+ 
 
-    return json.dumps(data)
+
+def post(url, data,authtok):
+#    request = urllib2.Request(headers={"X-TrackerToken": authtok})
+#    u = urllib2.urlopen(request, urllib.urlencode({'payload': data}))
+
+    request = urllib2.Request(POST_URL, data=data, headers={'Content-Type':'application/xml'})
+    request.add_header('X-TrackerToken',authtok)
+    request.add_header('Content-Type','application/xml')
+    request.headers
 
 
-def post(url, data):
-    u = urllib2.urlopen(POST_URL, urllib.urlencode({'payload': data}))
-    u.read()
+    u = urllib2.urlopen(request)
+
+    for line in u.readlines():
+		print line
+
     u.close()
+    print(data)
+
+
+
+
+
+
+
+
+
 
 
 
 if __name__ == '__main__':
     for line in sys.stdin.xreadlines():
         old, new, ref = line.strip().split(' ')
-        data = make_json(old, new, ref)
-        if POST_URL:
-            post(POST_URL, data)
-        else:
-            print(data)
+        data = make_json(old, new, ref, POST_URL, authtok)
+      #  if POST_URL:
+        #    post(POST_URL, data)
+      #  else:
+       #     print(data)
