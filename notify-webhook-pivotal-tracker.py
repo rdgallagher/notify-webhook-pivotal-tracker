@@ -127,7 +127,6 @@ def make_json(old, new, ref, POST_URL, authtok):
 	     }
 	    
 	if POST_URL:
-	  print(commits)
 	  post(POST_URL, dict2xml2(commits, False, False),authtok)
  
 
@@ -143,18 +142,8 @@ def post(url, data,authtok):
 
 
     u = urllib2.urlopen(request)
-
-    for line in u.readlines():
-		print line
-
+    u.read()
     u.close()
-    print(data)
-
-
-
-
-
-
 
 
 
@@ -165,7 +154,3 @@ if __name__ == '__main__':
     for line in sys.stdin.xreadlines():
         old, new, ref = line.strip().split(' ')
         data = make_json(old, new, ref, POST_URL, authtok)
-      #  if POST_URL:
-        #    post(POST_URL, data)
-      #  else:
-       #     print(data)
