@@ -33,9 +33,8 @@ def get_repo_name():
     else:
         return os.path.basename(os.path.dirname(os.getcwd()))
 
-POST_URL = get_config('hooks.webhookurl')
+
 REPO_URL = get_config('meta.url')
-authtok = get_config('meta.apikey')
 COMMIT_URL = get_config('meta.commiturl')
 if COMMIT_URL == None and REPO_URL != None:
     COMMIT_URL = REPO_URL + r'/commit/%s'
@@ -94,22 +93,9 @@ def get_revisions(old, new):
 
     return revisions
 
-def make_json(old, new, ref, POST_URL, authtok):
-    data = {
-        'before': old,
-        'after': new,
-        'ref': ref,
-        'repository': {
-            'url': REPO_URL,
-            'name': REPO_NAME,
-            'description': REPO_DESC,
-            'owner': {
-                'name': REPO_OWNER_NAME,
-                'email': REPO_OWNER_EMAIL
-                }
-            }
-        }
-
+def make_json(old, new, ref):
+    
+    POST_URL = get_config('hooks.webhookurl')
     revisions = get_revisions(old, new)
     
     for r in revisions:
@@ -127,7 +113,7 @@ def make_json(old, new, ref, POST_URL, authtok):
 	     }
 	    
 	if POST_URL:
-	  post(POST_URL, dict2xml2(commits, False, False),authtok)
+	  post(dict2xml2(commits, False, False))
  
 
 
@@ -135,6 +121,7 @@ def post(url, data,authtok):
 #    request = urllib2.Request(headers={"X-TrackerToken": authtok})
 #    u = urllib2.urlopen(request, urllib.urlencode({'payload': data}))
 
+    authtok = get_config('meta.apikey')
     request = urllib2.Request(POST_URL, data=data, headers={'Content-Type':'application/xml'})
     request.add_header('X-TrackerToken',authtok)
     request.add_header('Content-Type','application/xml')
@@ -153,4 +140,4 @@ def post(url, data,authtok):
 if __name__ == '__main__':
     for line in sys.stdin.xreadlines():
         old, new, ref = line.strip().split(' ')
-        data = make_json(old, new, ref, POST_URL, authtok)
+        data = make_json(old, new, ref)

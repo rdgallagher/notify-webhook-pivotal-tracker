@@ -10,6 +10,8 @@ API](http://github.com/guides/post-receive-hooks) as closely as
 possible, allowing arbitrary git repositories to use webhook
 capable services. At the moment, however, this fork only supports commits!
 
+Additional documentation is available at http://www.bentasker.co.uk/documentation/development-programming/172-linking-a-git-repo-with-pivotal-tracker
+
 ## Dependencies
 
 [dict2xml2](https://github.com/bentasker/dict2xml2)
